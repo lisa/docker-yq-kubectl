@@ -37,7 +37,7 @@ err() {
 # Ensure the directory to the file at $target exists
 ensure_directory() {
   target=$1 base=
-  base=$(basename $target)
+  base=$(dirname $target)
   if [[ $? -ne 0 ]]; then
     err "Couldn't figure out the base directory name of $target"
     exit 1
@@ -182,6 +182,8 @@ while getopts ":hi:n:c:r:a:A:o:t:" opt; do
     ;;
     o)
       credsfile=$OPTARG
+      do_secretkey=1
+      do_accesskey=1
     ;;
     \?)
       err "Invalid option"
