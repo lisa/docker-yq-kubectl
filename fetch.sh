@@ -66,7 +66,7 @@ ensure_directory() {
 }
 
 get_raw_yamlobj() {
-  local tokenfile=$1 namespace=$2 getcmd="$3" destination=$4 
+  local tokenfile=$1 namespace=$2 getcmd=$3 destination=$4 
   kubectl --token=$(cat $tokenfile) --insecure-skip-tls-verify=true -n $namespace $getcmd -o yaml 2> /dev/null 1> $destination 
   if [[ $? -ne 0 ]]; then
     err "Couldn't get the raw configmap."
@@ -165,7 +165,7 @@ do_secretkey=
 # temp file
 raw_configmap=
 
-while getopts ":hn:c:r:a:A:o:t:q:Q:" opt; do
+while getopts ":hn:y:c:r:a:A:o:t:q:Q:" opt; do
   case $opt in
     h)
       usage
