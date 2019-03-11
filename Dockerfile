@@ -4,7 +4,7 @@ ARG kubectlversion=1.12.4
 ARG yqversion=2.2.1
 
 RUN \
-  apt-get -y update && apt-get -y install curl && \
+  apt-get -y update && apt-get -y upgrade && apt-get -y install curl && \
   rm -rf /var/lib/apt/lists/*   && \
   cd /usr/local/bin             && \
   echo "Grabbing binaries..." && \
