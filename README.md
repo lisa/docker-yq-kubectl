@@ -29,9 +29,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: access-machine-info-cr
 rules:
-- apiGroups: [""]
+- apiGroups: ["machine.openshift.io"]
   resources: ["machines"]
-  resourceNames: [ "*" ]
   verbs: ["get", "list"]
 ---
 kind: RoleBinding
