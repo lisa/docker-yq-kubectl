@@ -66,8 +66,8 @@ ensure_directory() {
 }
 
 get_raw_yamlobj() {
-  local tokenfile=$1 namespace=$2 getcmd=$3 destination=$4 
-  kubectl --token=$(cat $tokenfile) --insecure-skip-tls-verify=true -n $namespace  get $getcmd -o yaml 2> /dev/null 1> $destination 
+  local tokenfile=$1 namespace=$2 getcmd="$3" destination=$4 
+  kubectl --token=$(cat $tokenfile) --insecure-skip-tls-verify=true -n $namespace $getcmd -o yaml 2> /dev/null 1> $destination 
   if [[ $? -ne 0 ]]; then
     err "Couldn't get the raw configmap."
     exit 1
@@ -236,7 +236,7 @@ if [[ -n $do_region || -n $do_clusterid ]]; then
     err "Couldn't allocate a temporary YAML file"
     exit 1
   fi
-  get_raw_yamlobj $tokenfile $namespace $yamldump $raw_configmap
+  get_raw_yamlobj $tokenfile $namespace "${yamldump}" $raw_configmap
 fi
 
 if [[ -n $do_clusterid ]]; then
