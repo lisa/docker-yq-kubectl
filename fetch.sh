@@ -5,8 +5,16 @@ set -o pipefail
 umask 077
 
 tokenfile="/var/run/secrets/kubernetes.io/serviceaccount/token"
-namespace="kube-system"
-configmapname="cluster-config-v1"
+namespace="openshift-machine-api"
+
+# Support for
+# as in kubectl $yamldump -o yaml
+# a mature expression might look like:
+# kubectl --token=$(cat $tokenfile) --insecure-skip-tls-verify=true -n $namespace $yamldump -o yaml > $tmpfile
+# cat $tmpfile | yq -r $clusteridyqexpression
+yamldump="get machines"
+clusteridyqexpression="items[0].metadata.labels[sigs.k8s.io/cluster-api-cluster]"
+regionyqexpression="items[0].spec.providerSpec.value.placement.region"
 
 accesskeyinfile="/secrets/aws_access_key_id"
 secretkeyinfile="/secrets/aws_secret_access_key"
@@ -16,8 +24,17 @@ credsfile="/secrets/aws/credentials.ini"
 
 usage() {
   echo "Usage: $0 <options>"
-  echo -e "\t-i <ConfigMap name> name of ConfigMap that stores region and cluster ID (def: ${configmapname})"
-  echo -e "\t-n <namespace> Namespace of where the ConfigMap is (def: ${namespace})"
+  echo
+  echo -e "\t-n <namespace> Namespace to run the yaml dump expression is (def: ${namespace})"
+  echo
+  echo -e "\t-y <yaml dump expression> kubectl expression to dump the object (def: ${yamldump})"
+  echo -e "\tex: kubectl -o yaml ${yamldump}"
+  echo -e "\tOmit namespace,     ^ Starting at carot"
+  echo
+  echo -e "\t-q <cluster id yq expression> yq expression to access cluster ID"
+  echo -e "\t  (def: ${clusteridyqexpression})"
+  echo -e "\t-Q <region yq expression> yq expression to access AWS region"
+  echo -e "\t  (def: ${regionyqexpression})"
   echo
   echo -e "\t-c <file> Write Cluster ID to <file> (def: ${regionfile})"
   echo
@@ -27,7 +44,6 @@ usage() {
   echo -e "\t-o <file> Write AWS credentials in AWS ini file format to <file>. Requires -a and -A and -r. (def: ${credsfile})"
   echo
   echo -e "\t-t <tokenfile> Location to serviceAccount tokenfile (def: ${tokenfile})"
-
 }
 
 err() { 
@@ -49,9 +65,9 @@ ensure_directory() {
   fi
 }
 
-get_raw_configmap() {
-  local tokenfile=$1 namespace=$2 configmapname=$3 destination=$4 
-  kubectl --token=$(cat $tokenfile) --insecure-skip-tls-verify=true -n $namespace get configmap/${configmapname} -o yaml 2> /dev/null 1> $destination 
+get_raw_yamlobj() {
+  local tokenfile=$1 namespace=$2 getcmd=$3 destination=$4 
+  kubectl --token=$(cat $tokenfile) --insecure-skip-tls-verify=true -n $namespace  get $getcmd -o yaml 2> /dev/null 1> $destination 
   if [[ $? -ne 0 ]]; then
     err "Couldn't get the raw configmap."
     exit 1
@@ -60,8 +76,8 @@ get_raw_configmap() {
 }
 
 get_cluster_awsregion() {
-  local raw_yaml=$1 region=
-  region=$(yq r $raw_yaml 'data[install-config]' | yq r - platform.aws.region)
+  local raw_yaml=$1 regionquery=$2 region=
+  region="$(yq r $raw_yaml ${regionquery})"
   if [[ $? -ne 0 ]]; then
     err "Couldn't read the cluster's AWS region."
     exit 1
@@ -70,8 +86,8 @@ get_cluster_awsregion() {
 }
 
 get_cluster_id() {
-  local raw_yaml=$1 clusterid=
-  clusterid=$(yq r $raw_yaml 'data[install-config]' | yq r - metadata.name)
+  local raw_yaml=$1 regionquery=$2 clusterid=
+  clusterid="$(yq r $raw_yaml ${regionquery})"
   if [[ $? -ne 0 ]]; then
     err "Couldn't read the cluster's ID."
     exit 1
@@ -149,17 +165,23 @@ do_secretkey=
 # temp file
 raw_configmap=
 
-while getopts ":hi:n:c:r:a:A:o:t:" opt; do
+while getopts ":hn:c:r:a:A:o:t:q:Q:" opt; do
   case $opt in
     h)
       usage
       exit 0
     ;;
+    q)
+      clusteridyqexpression=$OPTARG
+    ;;
+    Q)
+      regionyqexpression=$OPTARG
+    ;;
     t)
       tokenfile=$OPTARG
     ;;
-    i)
-      configmapname=$OPTARG
+    y)
+      yamldump=$OPTARG
     ;;
     n)
       namespace=$OPTARG
@@ -214,17 +236,17 @@ if [[ -n $do_region || -n $do_clusterid ]]; then
     err "Couldn't allocate a temporary YAML file"
     exit 1
   fi
-  get_raw_configmap $tokenfile $namespace $configmapname $raw_configmap
+  get_raw_yamlobj $tokenfile $namespace $yamldump $raw_configmap
 fi
 
 if [[ -n $do_clusterid ]]; then
-  clustername=$(get_cluster_id $raw_configmap)
+  clustername=$(get_cluster_id $raw_configmap $clusteridyqexpression)
   ensure_directory $clusteridfileout
   write_clusterid $clusteridfileout $clustername
 fi
 
 if [[ -n $do_region ]]; then
-  regionname=$(get_cluster_awsregion $raw_configmap)
+  regionname=$(get_cluster_awsregion $raw_configmap $regionyqexpression)
   ensure_directory $regionfile
   write_aws_config_file $regionfile $regionname
 fi
