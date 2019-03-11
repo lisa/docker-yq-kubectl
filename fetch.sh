@@ -209,7 +209,7 @@ if [[ -n $do_region || -n $do_accesskey || -n $do_secretkey ]]; then
 fi
 
 if [[ -n $do_region || -n $do_clusterid ]]; then
-  raw_configmap=$(mktemp -t XXXXX)
+  raw_configmap=$(mktemp)
   if [[ $? -ne 0 ]]; then
     err "Couldn't allocate a temporary YAML file"
     exit 1
