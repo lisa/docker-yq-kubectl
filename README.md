@@ -1,5 +1,4 @@
 # docker-yq-kubectl
-Ubuntu container image based Ubuntu 18.04 with yq and kubectl
 
 This is designed to be an [init container](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to populate various files for later use in containers.
 
