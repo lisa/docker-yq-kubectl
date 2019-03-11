@@ -1,12 +1,16 @@
 FROM ubuntu:18.04
 
+ARG kubectlversion=1.12.4
+ARG yqversion=2.2.1
+
 RUN \
   apt-get -y update && apt-get -y install curl && \
-  echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list && \
-  echo "deb http://ppa.launchpad.net/rmescandon/yq/ubuntu bionic main" > /etc/apt/sources.list.d/yq.list && \
-  curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -                          && \
-  apt-get -y update && apt-get -y upgrade                                                                && \
-  apt-get -y install yq kubectl && \
-  rm -rf /var/lib/apt/lists/*
+  rm -rf /var/lib/apt/lists/*   && \
+  cd /usr/local/bin             && \
+  echo "Grabbing binaries..." && \
+  curl -qLO https://storage.googleapis.com/kubernetes-release/release/v${kubectlversion}/bin/linux/amd64/kubectl && \
+  curl -qLO https://github.com/mikefarah/yq/releases/download/${yqversion}/yq_linux_amd64 && \
+  mv /usr/local/bin/yq_linux_amd64 /usr/local/bin/yq && \
+  chmod +x /usr/local/bin/kubectl /usr/local/bin/yq
 
 CMD [ "/bin/sh" ]
