@@ -36,7 +36,7 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: allow-deploy-access-to-cluster-info
+  name: allow-deploy-access-to-machine-info
   namespace: openshift-machine-api
 subjects:
 - kind: ServiceAccount
