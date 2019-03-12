@@ -8,11 +8,13 @@ The operations are related to writing cluster ID, AWS region name, and AWS API c
 
 Due to Kubernetes limitations, [ConfigMaps](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) can't be used (as volumes) across namespaces. Cluster information resides in the `kube-system` namespace (or sometimes `kube-public`) and on OpenShift Dedicated, the `kube-system/configmap/cluster-config-v1` ConfigMap has two pieces of information that we'd like to access, the cluster's ID and the AWS region in which it runs.
 
+An additional complication is the `kube-system/configmap/cluster-config-v1` is deprecated and thus we must find a different avenue for the pieces of data we care about. In the interim, we can rely on the `Machine` object(s) from the `openshift-machine-api` namespace.
+
 There is a further desire to rely on the [cloud-credential-operator](https://github.com/openshift/cloud-credential-operator) to request AWS credentials at runtime.
 
-### Accessing Cluster Information ConfigMap
+### Accessing Cluster Information
 
-To get access to the cluster information ConfigMap we could change our main container to access this information, but those initialization tasks are best suited to init containers. To that end, the [ServiceAccount](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for the Pod must be granted access to the aforementioned ConfigMap by [ClusterRole and RoleBinding](https://kubernetes.io/docs/reference/access-authn-authz/rbac/). A sample one follows:
+To get access to the cluster information ConfigMap and other objects we could change our main container to access this information, but those initialization tasks are best suited to init containers. To that end, the [ServiceAccount](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/) for the Pod must be granted access to the aforementioned objects by [ClusterRole and RoleBinding](https://kubernetes.io/docs/reference/access-authn-authz/rbac/). A sample one follows:
 
 ```yaml
 ---
@@ -25,19 +27,17 @@ metadata:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: access-cluster-info-cr
+  name: access-machine-info-cr
 rules:
-- apiGroups: [""]
-  resources: ["configmaps"]
-  resourceNames:
-    - cluster-config-v1
+- apiGroups: ["machine.openshift.io"]
+  resources: ["machines"]
   verbs: ["get", "list"]
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: allow-deploy-access-to-cluster-info
-  namespace: kube-system
+  name: allow-deploy-access-to-machine-info
+  namespace: openshift-machine-api
 subjects:
 - kind: ServiceAccount
   name: pod-sa
@@ -45,7 +45,7 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: access-cluster-info-cr
+  name: access-machine-info-cr
 ```
 
 ### AWS Credentials
