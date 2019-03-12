@@ -22,12 +22,12 @@ def ensure_dir(filepath):
     if not os.path.exists(os.path.dirname(filepath)):
         os.makedirs(os.path.dirname(filepath))
 
-def get_cluster_id(client, namespace):
-    v1b_machines = client.resources.get(api_version='machine.openshift.io/v1beta1', kind='Machine')
+def get_cluster_id(dclient, namespace):
+    v1b_machines = dclient.resources.get(api_version='machine.openshift.io/v1beta1', kind='Machine')
     return v1b_machines.get(namespace=namespace).items[0][u'metadata'][u'labels'][u'sigs.k8s.io/cluster-api-cluster']
 
-def get_region_id(client, namespace):
-    v1b_machines = client.resources.get(api_version='machine.openshift.io/v1beta1', kind='Machine')
+def get_region_id(dclient, namespace):
+    v1b_machines = dclient.resources.get(api_version='machine.openshift.io/v1beta1', kind='Machine')
     return v1b_machines.get(namespace=namespace).items[0][u'spec'][u'providerSpec'][u'value'][u'placement'][u'region']
 
 def write_region_config(dest, regionid):
