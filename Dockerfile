@@ -6,7 +6,7 @@ RUN \
   cd /tmp && \
   curl -L https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
   python /tmp/get-pip.py && \
-  pip install -U setuptools==40.8.0 urllib3==1.24.1 chardet==3.0.4 requests==2.21.0
+  pip install setuptools==40.8.0 urllib3==1.24.1 chardet==3.0.4 requests==2.21.0
 
 RUN \
   cd /tmp && \ 
