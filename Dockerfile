@@ -1,16 +1,29 @@
-FROM alpine:3.9.2
+FROM quay.io/openshift/origin-cli:v4.0.0
 
-ARG kubectlversion=1.12.4
-ARG yqversion=2.2.1
+ARG ocpythonlibver=0.8.6
 
-RUN apk add --no-cache curl bash
 RUN \
-  cd /usr/local/bin             && \
-  echo "Grabbing binaries..." && \
-  curl -sLO https://storage.googleapis.com/kubernetes-release/release/v${kubectlversion}/bin/linux/amd64/kubectl && \
-  curl -sLO https://github.com/mikefarah/yq/releases/download/${yqversion}/yq_linux_amd64 && \
-  mv /usr/local/bin/yq_linux_amd64 /usr/local/bin/yq && \
-  chmod +x /usr/local/bin/kubectl /usr/local/bin/yq
-ADD fetch.sh /usr/local/bin
+  cd /tmp && \
+  curl -L https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+  python /tmp/get-pip.py && \
+  pip install -U setuptools
+
+RUN \
+  cd /tmp && \ 
+  curl -LO https://github.com/openshift/openshift-restclient-python/archive/v${ocpythonlibver}.tar.gz && \
+  tar xvzf v${ocpythonlibver}.tar.gz && \
+  cd openshift-restclient-python-${ocpythonlibver} && \
+  (python setup.py install || python setup.py install)
+
+# https://medium.com/@gloriapalmagonzalez/urllib3-1-22-or-chardet-2-2-1-doesnt-match-a-supported-version-requestsdependencywarning-97c36e0cb561
+RUN \
+  pip uninstall -y requests && \
+  pip install requests && \
+  pip uninstall -y chardet && \
+  pip install chardet
+
+COPY src/init.py /usr/local/bin
+
+RUN chmod +x /usr/local/bin/init.py
 
 CMD [ "/bin/sh" ]

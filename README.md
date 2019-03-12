@@ -102,7 +102,7 @@ spec:
       initContainers:
       - name: setupcreds
         image: quay.io/lseelye/yq-kubectl:stable
-        command: [ "/usr/local/bin/fetch.sh", "-r", "/secrets/aws/config.ini", "-a", "/rawsecrets/aws_access_key_id", "-A", "/rawsecrets/aws_secret_access_key", "-o", "/secrets/aws/credentials.ini" ]
+        command: [ "/usr/local/bin/init.py", "-r", "/secrets/aws/config.ini", "-a", "/rawsecrets/aws_access_key_id", "-A", "/rawsecrets/aws_secret_access_key", "-o", "/secrets/aws/credentials.ini" ]
         volumeMounts:
         - name: awsrawcreds
           mountPath: /rawsecrets
