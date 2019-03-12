@@ -33,17 +33,17 @@ def get_region_id(client, namespace):
 def write_region_config(dest, regionid):
     ensure_dir(dest)
 
-    with open(dest,'wb') as cfgfile:
+    with open(dest, 'wb') as cfgfile:
         cfgfile.write('[default]\n')
         cfgfile.write('region = {}\n'.format(regionid))
 
-def write_credentials_file(dest,access_key_id, secret_key_id):
+def write_credentials_file(dest, access_key_id, secret_key_id):
     ensure_dir(dest)
 
-    with open(dest,'wb') as cfgfile:
+    with open(dest, 'wb') as cfgfile:
         cfgfile.write('[default]\n')
-        cfgfile.write('aws_access_key_id = {}\n'.format(access_key))
-        cfgfile.write('aws_secret_access_key = {}\n'.format(secret_key))
+        cfgfile.write('aws_access_key_id = {}\n'.format(access_key_id))
+        cfgfile.write('aws_secret_access_key = {}\n'.format(secret_key_id))
 
 def write_cluster_id(dest, clusterid):
     ensure_dir(dest)
