@@ -6,21 +6,14 @@ RUN \
   cd /tmp && \
   curl -L https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
   python /tmp/get-pip.py && \
-  pip install -U setuptools
+  pip install -U setuptools==40.8.0 urllib3==1.24.1 chardet==3.0.4 requests==2.21.0
 
 RUN \
   cd /tmp && \ 
   curl -LO https://github.com/openshift/openshift-restclient-python/archive/v${ocpythonlibver}.tar.gz && \
   tar xvzf v${ocpythonlibver}.tar.gz && \
   cd openshift-restclient-python-${ocpythonlibver} && \
-  (python setup.py install || python setup.py install)
-
-# https://medium.com/@gloriapalmagonzalez/urllib3-1-22-or-chardet-2-2-1-doesnt-match-a-supported-version-requestsdependencywarning-97c36e0cb561
-RUN \
-  pip uninstall -y requests && \
-  pip install requests && \
-  pip uninstall -y chardet && \
-  pip install chardet
+  python setup.py install
 
 COPY src/init.py /usr/local/bin
 
